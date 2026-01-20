@@ -20,7 +20,8 @@ app.post('/auth/login', (req, res) => {
   res.status(400).json({ error: 'Dados inválidos' });
 });
 
-const PORT = process.env.PORT || 3333;
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log('Servidor rodando na porta ' + PORT);
 });
