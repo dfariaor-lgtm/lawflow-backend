@@ -23,18 +23,12 @@ router.post("/register", async (req, res) => {
   });
 });
 
-// LOGIN
+// LOGIN (TEMPORÁRIO – SEM BANCO)
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  if (email !== "teste@lawflow.ai") {
-    return res.status(401).json({ error: "Usuário não encontrado" });
-  }
-
-  const passwordIsValid = await bcrypt.compare(password, "$2a$10$123");
-
-  if (!passwordIsValid) {
-    return res.status(401).json({ error: "Senha inválida" });
+  if (email !== "teste@lawflow.ai" || password !== "123456") {
+    return res.status(401).json({ error: "Email ou senha inválidos" });
   }
 
   const token = jwt.sign(
