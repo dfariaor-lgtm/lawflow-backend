@@ -4,39 +4,46 @@ import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
+// REGISTRO
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ error: "Dados inválidos" });
+    return res.status(400).json({ error: "Dados obrigatórios" });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  return res.json({
-    message: "Usuário registrado",
-    email,
-    passwordHash: hashedPassword
+  return res.status(201).json({
+    message: "Usuário registrado com sucesso",
+    user: {
+      email,
+      password: hashedPassword
+    }
   });
 });
 
+// LOGIN
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  const fakePasswordHash = await bcrypt.hash("123456", 10);
-  const isValid = await bcrypt.compare(password, fakePasswordHash);
+  if (email !== "teste@lawflow.ai") {
+    return res.status(401).json({ error: "Usuário não encontrado" });
+  }
 
-  if (!isValid) {
-    return res.status(401).json({ error: "Credenciais inválidas" });
+  const passwordIsValid = await bcrypt.compare(password, "$2a$10$123");
+
+  if (!passwordIsValid) {
+    return res.status(401).json({ error: "Senha inválida" });
   }
 
   const token = jwt.sign(
     { email },
     "lawflow_secret",
-    { expiresIn: "1d" }
+    { expiresIn: "1h" }
   );
 
-  res.json({ token });
+  return res.json({ token });
 });
 
 export default router;
