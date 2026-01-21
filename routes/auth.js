@@ -1,32 +1,33 @@
 import express from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-// REGISTRO
-router.post("/register", async (req, res) => {
+/**
+ * REGISTRO (fake, só para teste)
+ */
+router.post("/register", (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ error: "Dados obrigatórios" });
+    return res.status(400).json({ error: "Email e senha são obrigatórios" });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
 
   return res.status(201).json({
     message: "Usuário registrado com sucesso",
     user: {
-      email,
-      password: hashedPassword
+      email
     }
   });
 });
 
-// LOGIN (TEMPORÁRIO – SEM BANCO)
-router.post("/login", async (req, res) => {
+/**
+ * LOGIN (FUNCIONAL, SEM BANCO)
+ */
+router.post("/login", (req, res) => {
   const { email, password } = req.body;
 
+  // credenciais fixas para teste
   if (email !== "teste@lawflow.ai" || password !== "123456") {
     return res.status(401).json({ error: "Email ou senha inválidos" });
   }
