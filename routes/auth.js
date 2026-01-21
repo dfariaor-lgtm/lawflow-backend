@@ -4,51 +4,36 @@ import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-// usuários em memória (temporário)
-const users = [];
-
-// REGISTER
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ error: "Dados obrigatórios" });
+    return res.status(400).json({ error: "Dados inválidos" });
   }
 
-  const exists = users.find(u => u.email === email);
-  if (exists) {
-    return res.status(400).json({ error: "Usuário já existe" });
-  }
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-  const hash = await bcrypt.hash(password, 10);
-
-  users.push({
-    id: users.length + 1,
+  return res.json({
+    message: "Usuário registrado",
     email,
-    password: hash
+    passwordHash: hashedPassword
   });
-
-  res.status(201).json({ message: "Usuário criado" });
 });
 
-// LOGIN
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  const user = users.find(u => u.email === email);
-  if (!user) {
-    return res.status(401).json({ error: "Credenciais inválidas" });
-  }
+  const fakePasswordHash = await bcrypt.hash("123456", 10);
+  const isValid = await bcrypt.compare(password, fakePasswordHash);
 
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) {
+  if (!isValid) {
     return res.status(401).json({ error: "Credenciais inválidas" });
   }
 
   const token = jwt.sign(
-    { id: user.id, email: user.email },
-    process.env.JWT_SECRET || "dev_secret",
-    { expiresIn: "1h" }
+    { email },
+    "lawflow_secret",
+    { expiresIn: "1d" }
   );
 
   res.json({ token });
