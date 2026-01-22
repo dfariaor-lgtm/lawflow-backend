@@ -6,11 +6,9 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-/**
- * ============================
- * REGISTER
- * ============================
- */
+// ============================
+// REGISTER
+// ============================
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -23,7 +21,6 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ⚠️ Por enquanto mock (sem banco ainda)
     res.status(201).json({
       message: "Usuário registrado com sucesso",
       email,
@@ -35,11 +32,9 @@ router.post("/register", async (req, res) => {
   }
 });
 
-/**
- * ============================
- * LOGIN
- * ============================
- */
+// ============================
+// LOGIN
+// ============================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -50,10 +45,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-i
-
-    // ⚠️ MOCK TEMPORÁRIO
-    // senha válida = 12345
+    // MOCK TEMPORÁRIO
     const hashedPassword = await bcrypt.hash("12345", 10);
 
     const passwordMatch = await bcrypt.compare(
@@ -80,12 +72,10 @@ i
   }
 });
 
-/**
- * ============================
- * ROTA PROTEGIDA
- * ============================
- */
-router.get("/me", authMiddleware, async (req, res) => {
+// ============================
+// ROTA PROTEGIDA
+// ============================
+router.get("/me", authMiddleware, (req, res) => {
   res.json({
     message: "Rota protegida funcionando ✅",
     user: req.user,
