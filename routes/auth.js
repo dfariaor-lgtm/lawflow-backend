@@ -1,5 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -27,7 +28,6 @@ router.post("/register", (req, res) => {
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  // credenciais fixas para teste
   if (email !== "teste@lawflow.ai" || password !== "123456") {
     return res.status(401).json({ error: "Email ou senha inválidos" });
   }
@@ -41,4 +41,7 @@ router.post("/login", (req, res) => {
   return res.json({ token });
 });
 
-export default router;
+/**
+ * ROTA PROTEGIDA
+ */
+router.get("/me", aut
