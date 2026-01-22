@@ -1,71 +1,93 @@
 import express from "express";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ===== TESTE =====
-router.get("/ping", (req, res) => {
-  res.json({ ok: true });
-});
-
-// ===== REGISTER =====
+/**
+ * ============================
+ * REGISTER
+ * ============================
+ */
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: "Dados obrigatórios" });
+      return res.status(400).json({
+        error: "Email e senha são obrigatórios",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = {
-      id: Date.now().toString(),
+    // ⚠️ Por enquanto mock (sem banco ainda)
+    res.status(201).json({
+      message: "Usuário registrado com sucesso",
       email,
-      password: hashedPassword,
-    };
-
-    const token = jwt.sign(user, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+      hashedPassword,
     });
-
-    res.json({ token });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro no registro" });
+    console.error("REGISTER ERROR:", err);
+    res.status(500).json({ error: "Erro ao registrar usuário" });
   }
 });
 
-// ===== LOGIN =====
+/**
+ * ============================
+ * LOGIN
+ * ============================
+ */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (password !== "12345") {
-      return res.status(401).json({ error: "Senha inválida" });
+    if (!email || !password) {
+      return res.status(400).json({
+        error: "Email e senha são obrigatórios",
+      });
     }
 
-    const user = {
-      id: "1",
-      email,
-    };
+i
 
-    const token = jwt.sign(user, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // ⚠️ MOCK TEMPORÁRIO
+    // senha válida = 12345
+    const hashedPassword = await bcrypt.hash("12345", 10);
+
+    const passwordMatch = await bcrypt.compare(
+      password,
+      hashedPassword
+    );
+
+    if (!passwordMatch) {
+      return res.status(401).json({
+        error: "Senha incorreta",
+      });
+    }
+
+    const token = jwt.sign(
+      { email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
     res.json({ token });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro no login" });
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ error: "Erro ao fazer login" });
   }
 });
 
-// ===== PROTECTED =====
+/**
+ * ============================
+ * ROTA PROTEGIDA
+ * ============================
+ */
 router.get("/me", authMiddleware, async (req, res) => {
   res.json({
+    message: "Rota protegida funcionando ✅",
     user: req.user,
   });
 });
