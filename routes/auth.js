@@ -2,84 +2,100 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+import User from "../models/User.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ============================
-// REGISTER
-// ============================
+/* ============================
+   REGISTER
+============================ */
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        error: "Email e senha são obrigatórios",
-      });
+      return res.status(400).json({ error: "Campos obrigatórios" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({ error: "Usuário já existe" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = await User.create({
+      email,
+      hashedPassword
+    });
 
     res.status(201).json({
       message: "Usuário registrado com sucesso",
-      email,
-      hashedPassword,
+      email: user.email
     });
+
   } catch (err) {
     console.error("REGISTER ERROR:", err);
-    res.status(500).json({ error: "Erro ao registrar usuário" });
+    res.status(500).json({ error: "Erro no registro" });
   }
 });
 
-// ============================
-// LOGIN
-// ============================
+/* ============================
+   LOGIN
+============================ */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        error: "Email e senha são obrigatórios",
-      });
+      return res.status(400).json({ error: "Campos obrigatórios" });
     }
 
-    // MOCK TEMPORÁRIO
-    const hashedPassword = await bcrypt.hash("12345", 10);
+    const user = await User.findOne({ email });
 
-    const passwordMatch = await bcrypt.compare(
-      password,
-      hashedPassword
-    );
+    if (!user) {
+      return res.status(401).json({ error: "Usuário não encontrado" });
+    }
 
-    if (!passwordMatch) {
-      return res.status(401).json({
-        error: "Senha incorreta",
-      });
+    const isMatch = await bcrypt.compare(password, user.hashedPassword);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: "Senha incorreta" });
     }
 
     const token = jwt.sign(
-      { email },
+      { id: user._id },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }
     );
 
-    res.json({ token });
+    res.json({
+      message: "Login realizado com sucesso",
+      token
+    });
+
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    res.status(500).json({ error: "Erro ao fazer login" });
+    res.status(500).json({ error: "Erro no login" });
   }
 });
 
-// ============================
-// ROTA PROTEGIDA
-// ============================
-router.get("/me", authMiddleware, (req, res) => {
-  res.json({
-    message: "Rota protegida funcionando ✅",
-    user: req.user,
-  });
+/* ============================
+   ROTA PROTEGIDA
+============================ */
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-hashedPassword");
+
+    res.json(user);
+
+  } catch (err) {
+    console.error("ME ERROR:", err);
+    res.status(500).json({ error: "Erro ao buscar usuário" });
+  }
 });
 
 export default router;
